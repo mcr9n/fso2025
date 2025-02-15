@@ -44,19 +44,22 @@ void sjf_nao_preemptivo(processo processos[], int n) {
     qsort(processos, n, sizeof(processo), compare_duracao);
     int tempo = 0; 
     int executados = 0;
+    bool tempo_incrementado = false;
     while(executados < n){
 		int i = 0;
 		while (i < n) {                                              
-			if(tempo >= processos[i].tempo_chegada && processos[i].tempo_restante > 0){                  				                                
+			if(tempo >= processos[i].tempo_chegada && processos[i].tempo_restante > 0){               				                                
 		        processos[i].tempo_espera = tempo - processos[i].tempo_chegada; // tempo atual está rodando então esperou até o penúltimo tempo
 		        processos[i].tempo_conclusao = tempo + processos[i].tempo_execucao; // tempo de conclusao sera o tempo que comecou rodar mais o tempo de execucao
-				tempo += processos[i].tempo_execucao; 
+				tempo += processos[i].tempo_execucao;
 				processos[i].tempo_restante = 0; // processo rodou então tempo restante zerado                                     
 		        executados++;
+		        tempo_incrementado = true;
 		    }		                                                                     
 			i++;                                                                       
 		}
-		tempo++;                                                                          
+		if(!tempo_incrementado) tempo++;
+		tempo_incrementado = false;
 	}
 	qsort(processos, n, sizeof(processo), compare_tempo_espera);
 }                                                             
