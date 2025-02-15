@@ -68,24 +68,42 @@ void sjf_nao_preemptivo(processo processos[], int n) {
 void round_robin(processo processos[], int n, int quantum) {
     int tempo = 0, restante = n;
     bool executado;
-    do {
+    
+    // Ordena os processos pelo tempo de chegada para garantir que sejam atendidos na ordem correta
+    qsort(processos, n, sizeof(processo), compare_tempo_chegada);
+    
+    while (restante > 0) {
         executado = false;
+
         for (int i = 0; i < n; i++) {
-            if (processos[i].tempo_restante > 0) {
+            if (processos[i].tempo_restante > 0 && tempo >= processos[i].tempo_chegada) {
                 executado = true;
-                if (processos[i].tempo_restante > quantum) {
+
+                // Se o tempo restante for menor ou igual ao quantum, finaliza o processo
+                if (processos[i].tempo_restante <= quantum) {
+                    tempo += processos[i].tempo_restante;
+                    processos[i].tempo_restante = 0;
+                    processos[i].tempo_conclusao = tempo;
+                    processos[i].tempo_espera = tempo - processos[i].tempo_chegada - processos[i].tempo_execucao;
+                    restante--;
+                } else {
+                    // Executa o quantum e reduz o tempo restante
                     tempo += quantum;
                     processos[i].tempo_restante -= quantum;
-                } else {
-                    tempo += processos[i].tempo_restante;
-                    processos[i].tempo_espera = tempo - processos[i].tempo_chegada - processos[i].tempo_execucao;
-                    processos[i].tempo_restante = 0;
-                    restante--;
                 }
             }
         }
-    } while (executado);
+
+        // Se nenhum processo foi executado, avancamos no tempo ate o proximo processo chegar
+        if (!executado) {
+            tempo++;
+        }
+    }
+
+    // Ordena os processos pelo tempo de chegada novamente para saida organizada
+    qsort(processos, n, sizeof(processo), compare_tempo_chegada);
 }
+
 
 // Funcao para imprimir os resultados
 void imprimir_resultados(processo processos[], int n) {
