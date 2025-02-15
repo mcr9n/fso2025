@@ -1,0 +1,9 @@
+# Ignorar arquivos de projeto específicos
+.project
+
+# Ignorar arquivos binários e executáveis gerados pela compilação
+main
+*.o
+*.exe
+*.out
+*.bin
