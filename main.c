@@ -37,6 +37,15 @@ void fifo(processo processos[], int n) {
         processos[i].tempo_restante -= processos[i].tempo_execucao;
         tempo += processos[i].tempo_execucao;
     }
+
+    printf("\nRepresentação gráfica do escalonamento\n");
+    // Nome dos processsos
+    for (int i = 0; i < n; i++) printf("|   P%d  ", i+1);
+    printf("|\n");
+    // Linha do tempo
+    printf("%02d", 0);
+    for (int i = 0; i < n; i++) printf("------%02d", processos[i].tempo_conclusao);
+    printf("\n");
 }
 
 // Simulacao do escalonamento SJF (Não preemptivo)
@@ -62,12 +71,27 @@ void sjf_nao_preemptivo(processo processos[], int n) {
 		tempo_incrementado = false;
 	}
 	qsort(processos, n, sizeof(processo), compare_tempo_espera);
+
+    printf("\nRepresentação gráfica do escalonamento\n");
+    // Nome dos processsos
+    for (int i = 0; i < n; i++) printf("|   P%d  ", i+1);
+    printf("|\n");
+    // Linha do tempo
+    printf("%02d", 0);
+    for (int i = 0; i < n; i++) printf("------%02d", processos[i].tempo_conclusao);
+    printf("\n");
 }                                                             
 
 // Simulacao do escalonamento Round Robin
 void round_robin(processo processos[], int n, int quantum) {
     int tempo = 0, restante = n;
     bool executado;
+
+    // Construção da representação gráfica
+    char nome_processos[150];
+    char linha_tempo[150];
+    int str_padding = 0;
+    printf("\nRepresentação gráfica do escalonamento\n|");
     
     // Ordena os processos pelo tempo de chegada para garantir que sejam atendidos na ordem correta
     qsort(processos, n, sizeof(processo), compare_tempo_chegada);
@@ -79,6 +103,7 @@ void round_robin(processo processos[], int n, int quantum) {
             if (processos[i].tempo_restante > 0 && tempo >= processos[i].tempo_chegada) {
                 executado = true;
 
+                sprintf(&nome_processos[str_padding], " P%d |", i+1);
                 // Se o tempo restante for menor ou igual ao quantum, finaliza o processo
                 if (processos[i].tempo_restante <= quantum) {
                     tempo += processos[i].tempo_restante;
@@ -91,6 +116,7 @@ void round_robin(processo processos[], int n, int quantum) {
                     tempo += quantum;
                     processos[i].tempo_restante -= quantum;
                 }
+                str_padding += sprintf(&linha_tempo[str_padding], "---%02d", tempo);
             }
         }
 
@@ -99,6 +125,8 @@ void round_robin(processo processos[], int n, int quantum) {
             tempo++;
         }
     }
+
+    printf("%s\n00%s\n", nome_processos, linha_tempo, tempo);
 
     // Ordena os processos pelo tempo de chegada novamente para saida organizada
     qsort(processos, n, sizeof(processo), compare_tempo_chegada);
