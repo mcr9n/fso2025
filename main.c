@@ -26,6 +26,18 @@ int compare_duracao(const void *a, const void *b) {
 int compare_tempo_espera(const void *a, const void *b) {
     return ((processo *)a)->tempo_espera - ((processo *)b)->tempo_espera;
 }
+// Funcao para saber o tempo de chegada mais proximo
+int next_tempo_chegada(processo processos[], int n, int tempo) {
+    qsort(processos, n, sizeof(processo), compare_tempo_chegada);
+    int temp = -1;
+    for (int i = 0; i < n; i++) {
+        if (processos[i].tempo_chegada > tempo) {
+            temp = processos[i].tempo_chegada;
+            break;
+        }
+    }
+    return temp;
+}
 
 // Simulacao do escalonamento FIFO
 void fifo(processo processos[], int n) {
@@ -40,7 +52,7 @@ void fifo(processo processos[], int n) {
 
     printf("\nRepresentação gráfica do escalonamento\n");
     // Nome dos processsos
-    for (int i = 0; i < n; i++) printf("|   P%d  ", i+1);
+    for (int i = 0; i < n; i++) printf("|   P%d  ", processos[i].pid);
     printf("|\n");
     // Linha do tempo
     printf("%02d", 0);
@@ -74,7 +86,7 @@ void sjf_nao_preemptivo(processo processos[], int n) {
 
     printf("\nRepresentação gráfica do escalonamento\n");
     // Nome dos processsos
-    for (int i = 0; i < n; i++) printf("|   P%d  ", i+1);
+    for (int i = 0; i < n; i++) printf("|   P%d  ", processos[i].pid);
     printf("|\n");
     // Linha do tempo
     printf("%02d", 0);
@@ -103,7 +115,7 @@ void round_robin(processo processos[], int n, int quantum) {
             if (processos[i].tempo_restante > 0 && tempo >= processos[i].tempo_chegada) {
                 executado = true;
 
-                sprintf(&nome_processos[str_padding], " P%d |", i+1);
+                sprintf(&nome_processos[str_padding], " P%d |", processos[i].pid);
                 // Se o tempo restante for menor ou igual ao quantum, finaliza o processo
                 if (processos[i].tempo_restante <= quantum) {
                     tempo += processos[i].tempo_restante;
@@ -123,6 +135,57 @@ void round_robin(processo processos[], int n, int quantum) {
         // Se nenhum processo foi executado, avancamos no tempo ate o proximo processo chegar
         if (!executado) {
             tempo++;
+        }
+    }
+
+    printf("%s\n00%s\n", nome_processos, linha_tempo, tempo);
+
+    // Ordena os processos pelo tempo de chegada novamente para saida organizada
+    qsort(processos, n, sizeof(processo), compare_tempo_chegada);
+}
+
+// Simulacao do escalonamento SJF preemptivo
+void sjf_preemptivo(processo processos[], int n) {
+    int tempo = 0, restante = n;
+    bool executado;
+
+    // Construção da representação gráfica
+    char nome_processos[150];
+    char linha_tempo[150];
+    int str_padding = 0;
+    printf("\nRepresentação gráfica do escalonamento\n|");
+    
+    while (restante > 0) {
+        executado = false;
+        int next_tempo = next_tempo_chegada(processos, n, tempo);
+        int diff_tempo = next_tempo - tempo;
+
+        qsort(processos, n, sizeof(processo), compare_duracao);
+        for (int i = 0; i < n; i++) {
+            if (processos[i].tempo_restante > 0 && tempo >= processos[i].tempo_chegada) {
+                executado = true;
+
+                sprintf(&nome_processos[str_padding], " P%d |", processos[i].pid);
+                // Se o tempo restante for menor ou igual ao quantum, finaliza o processo
+                if (next_tempo == -1 || processos[i].tempo_restante <= diff_tempo) {
+                    tempo += processos[i].tempo_restante;
+                    processos[i].tempo_restante = 0;
+                    processos[i].tempo_conclusao = tempo;
+                    processos[i].tempo_espera = tempo - processos[i].tempo_chegada - processos[i].tempo_execucao;
+                    restante--;
+                } else {
+                    // Executa o quantum e reduz o tempo restante
+                    tempo += diff_tempo;
+                    processos[i].tempo_restante -= diff_tempo;
+                }
+                str_padding += sprintf(&linha_tempo[str_padding], "---%02d", tempo);
+                break;
+            }
+        }
+
+        // Se nenhum processo foi executado, avancamos no tempo ate o proximo processo chegar
+        if (!executado) {
+            tempo += diff_tempo;
         }
     }
 
@@ -160,7 +223,7 @@ int main() {
         processos[i].tempo_restante = processos[i].tempo_execucao;
     }
     
-    printf("1. FIFO\n2. SJF não preemptivo\n3. Round Robin\nEscolha o algoritmo: ");
+    printf("1. FIFO\n2. SJF não preemptivo\n3. Round Robin\n4. SJF preemptivo\nEscolha o algoritmo: ");
     scanf("%d", &escolha);
     
     switch (escolha) {
@@ -174,6 +237,9 @@ int main() {
             printf("Quantum para Round Robin: ");
             scanf("%d", &quantum);
             round_robin(processos, n, quantum);
+            break;
+        case 4:
+            sjf_preemptivo(processos, n);
             break;
         default:
             printf("Opcao invalida.\n");

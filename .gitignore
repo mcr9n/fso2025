@@ -1,5 +1,6 @@
 # Ignorar arquivos de projeto específicos
 .project
+.vscode
 
 # Ignorar arquivos binários e executáveis gerados pela compilação
 main
